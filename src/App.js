@@ -9,15 +9,16 @@ import CursorMarker from 'react-calendar-timeline/lib/lib/markers/public/CursorM
 import TimelineMarkers from 'react-calendar-timeline/lib/lib/markers/public/TimelineMarkers'
 import CustomMarker from 'react-calendar-timeline/lib/lib/markers/public/CustomMarker'
 import "./App.css"
+
 function App() {
 
-  const groups = [{ id: 0, title: '' }, { id: 1, title: 'group 1' }, { id: 2, title: 'group 2' }]
   let timeBar = 0;
-  console.log(timeBar)
-  const calculatePercentage = () => {
-
-  }
-
+  const grpHeight = 90;
+  const groups = [
+    { id: 0, title: '', height: 45 },
+    { id: 1, title: 'group 1', height: grpHeight },
+    { id: 2, title: 'group 2', height: grpHeight },
+  ];
   const items = [
     {
       id: 0,
@@ -31,12 +32,7 @@ function App() {
       background: ["#9050E9", "#b187eb"],
       start_time: moment().add(-5, "d").startOf("day").valueOf(),
       end_time: moment().add(20, "d").startOf("day").valueOf(),
-      itemProps: {
-        onDoubleClick: () => { console.log('You clicked double!') },
-        style: {
-          background: 'fuchsia'
-        }
-      }
+      className: "amit",
     },
     {
       id: 2,
@@ -56,83 +52,74 @@ function App() {
     }
   ];
 
-
-
   const today = Date.now();
   const timeStart = moment().startOf("month");
   const timeEnd = moment().add(4, "M").endOf("month");
 
 
-  const itemRenderer = ({ item, timelineContext, itemContext, getItemProps, getResizeProps }) => {
+  const itemRenderer = ({ item, itemContext, getItemProps }) => {
+    const netVal = (timeBar - itemContext.dimensions.left);
+    let lftPercent = 0;
+    if (netVal > 0) {
+      lftPercent = (netVal * 100) / itemContext.dimensions.width;
+    }
+    const itemTopAccordingToPlugin = getItemProps({}).style.top;
+    const topHeight = Math.round(itemTopAccordingToPlugin.split('px')[0]) + itemContext.dimensions.height
 
-    console.log(item.background)
-
-    const { left: leftResizeProps, right: rightResizeProps } = getResizeProps();
-    const background = itemContext.selected ? (itemContext.dragging ? "red" : "blue") : item && item.background ? `${item.background[0]}""` : "grey";
-    const borderColor = itemContext.resizing ? "red" : "yellow";
-    const netVal = (timeBar - itemContext.dimensions.left) - 4;
-    const lftPercent = (netVal * 100) / itemContext.dimensions.width;
-    console.log(lftPercent)
-
+    const itemStyle = {
+      ...getItemProps({ onMouseDown: () => { console.log("on item click", item); }, }),
+      style: {
+        ...getItemProps({ onMouseDown: () => { console.log("on item click", item); }, }).style,
+        borderRadius: 4,
+        border: "unset",
+        top: `${topHeight}px`
+      }
+    }
     return (
       <div
-        {...getItemProps({
-          style: {
-            // background,
-            color: "white",
-            borderColor,
-            borderStyle: "solid",
-            borderWidth: 1,
-            borderRadius: 4,
-            borderLeftWidth: itemContext.selected ? 3 : 1,
-            borderRightWidth: itemContext.selected ? 3 : 1
-          },
-          onMouseDown: () => {
-            console.log("on item click", item);
-          }
-        })}
+        {...itemStyle}
       >
-        {itemContext.useResizeHandle ? <div {...leftResizeProps} /> : null}
-
         <div
           style={{
             height: itemContext.dimensions.height,
             overflow: "hidden",
-            paddingLeft: 3,
             textOverflow: "ellipsis",
-            whiteSpace: "nowrap"
+            whiteSpace: "nowrap",
+            borderRadius: "4px"
           }}
         >
-          <div 
-          style={{
-            width: `${lftPercent}%`,
-            display: "inline-block",
-            height: "100%",
-            position: "relative",
-            background: `${item.background[0]}`
-          }}
-        ></div>
-          <div 
-          style={{
-            width: `${100 - lftPercent}%`,
-            display: "inline-block",
-            height: "100%",
-            position: "relative",
-            background: `${item.background[1]}`
-          }}></div>
-          <div 
-          style={{
-            display: "inline-block",
-            position: "absolute",
-            left: "0",
-            color: "black",
-            width: "100%",
-            textAlign: "center",
-          }}
+          {(netVal > 0) &&
+            [<div
+              key={"leftDiv"}
+              style={{
+                width: `${lftPercent}%`,
+                display: "inline-block",
+                height: "100%",
+                position: "relative",
+                background: `${item.background[0]}`
+              }}
+            ></div>,
+            <div
+              key={"rightDiv"}
+              style={{
+                width: `${100 - lftPercent}%`,
+                display: "inline-block",
+                height: "100%",
+                position: "relative",
+                background: `${item.background[1]}`
+              }}></div>]
+          }
+          <div
+            style={{
+              display: "inline-block",
+              position: "absolute",
+              left: "0",
+              color: "#fff",
+              width: "100%",
+              textAlign: "center",
+            }}
           >{itemContext.title}</div>
         </div>
-
-        {itemContext.useResizeHandle ? <div {...rightResizeProps} /> : null}
       </div>
     );
   };
@@ -148,6 +135,8 @@ function App() {
         defaultTimeStart={timeStart}
         defaultTimeEnd={timeEnd}
         sidebarWidth={130}
+        itemHeightRatio={1}
+        stackItems={true}
         className={"App"}
         timeSteps={{
           day: 7
@@ -162,73 +151,47 @@ function App() {
               return <div className='cal-title' {...getRootProps()}>Report</div>;
             }}
           </SidebarHeader>
-          {/* <DateHeader unit="primaryHeader" /> */}
           <DateHeader
             unit={"month"}
             labelFormat={"DD MMM yyyy"}
             className={"dateLabel"}
           />
           <CursorMarker />
-          {/* <CursorMarker>
-            {({ styles, date }) => {
-              const customStyle3s = {
-                ...styles,
-                backgroundColor: "deeppink",
-                width: "4px"
-              };
-              return (
-                <div style={customStyle3s}>
-                  <div
-                    style={{
-                      // position: "fixed",
-                      // left: 100,
-                      // bottom: 50,
-                      background: "rgba(0, 0, 0, 0.5)",
-                      color: "white",
-                      padding: 10,
-                      width: 100,
-                      fontSize: 20,
-                      borderRadius: 5,
-                      zIndex: 85
-                    }}
-                  >
-                    <moment interval={30000}>1976-04-19T12:59-0500</moment>
-                  </div>
-                </div>
-              );
-            }}
-          </CursorMarker> */}
         </TimelineHeaders>
         <TimelineMarkers>
           <CustomMarker date={today} />
           <CustomMarker date={today}>
-            {/* custom renderer for this marker */}
             {(ele) => {
               timeBar = ele.styles.left;
               const customStyles = {
                 ...ele.styles,
                 backgroundColor: "deeppink",
-                width: "4px",
-                zIndex: "999"
+                width: "2px",
+                zIndex: "999",
               };
               return (
                 <div style={customStyles}>
-                  {/* <div
+                  <div
                     style={{
-                      // position: "fixed",
-                      // left: 100,
-                      // bottom: 50,
-                      background: "rgba(0, 0, 0, 0.5)",
-                      color: "white",
-                      padding: 10,
-                      width: 180,
-                      fontSize: 20,
+                      background: "#fff",
+                      color: "#000",
+                      width: 75,
+                      height: 30,
+                      fontSize: 10,
                       borderRadius: 5,
-                      zIndex: 85
+                      zIndex: 85,
+                      border: "1px solid",
+                      overflow: "hidden",
+                      textAlign: "center",
+                      padding: "6px",
+                      marginLeft: "-36px",
+                      marginTop: "6px"
                     }}
                   >
-                    <moment interval={30}>{today}</moment>
-                  </div> */}
+                    {
+                      new Date().toLocaleDateString("en-US", { month: 'short', year: 'numeric', day: 'numeric' })
+                    }
+                  </div>
                 </div>
               );
             }}

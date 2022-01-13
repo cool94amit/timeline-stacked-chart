@@ -5,7 +5,7 @@
   height: 100vh !important;
 }
 .rct-outer > .rct-scroll {
-  border: 1px solid;
+  border-left: 1px solid #bbb;
 }
 .rct-sidebar, .rct-sidebar > div{
   height: 100%;
@@ -26,4 +26,7 @@
 }
 .react-calendar-timeline .rct-vertical-lines .rct-vl.rct-day-6, .react-calendar-timeline .rct-vertical-lines .rct-vl.rct-day-0 {
   background: unset;
+}
+.rct-item {
+  /* top: 118px !important */
 }
